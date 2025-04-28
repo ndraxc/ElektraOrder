@@ -4904,15 +4904,23 @@ function sendOrderToWhatsApp() {
     window.open(whatsappUrl, '_blank');
 }
 
-// Fungsi untuk menyalin pesanan ke clipboard
 function copyOrderToClipboard() {
     if (totalItems === 0) {
         showToast('List pesanan nu puyung');
         return;
     }
     
-
+    const message = generateOrderText();
+    navigator.clipboard.writeText(message).then(() => {
+        showToast('List pesanan berhasil disalin!');
+    }).catch(err => {
+        console.error('Gagal menyalin: ', err);
+        showToast('Gagal menyalin list pesanan');
+    });
 }
+    
+
+
 
 // Fungsi untuk menampilkan toast notification
 function showToast(message) {
