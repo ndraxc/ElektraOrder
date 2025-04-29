@@ -17,7 +17,123 @@
             padding: 0;
             transition: background-color 0.3s, color 0.3s;
         }
+        /* ================== STYLE DRAF ================== */
+.draft-btn {
+    background: none !important;
+    border: none !important;
+    color: #128C7E !important;
+    font-size: 18px !important;
+    cursor: pointer !important;
+    margin: 0 5px !important;
+    transition: all 0.3s !important;
+    padding: 5px !important;
+    border-radius: 4px !important;
+}
 
+.dark-mode .draft-btn {
+    color: #25D366 !important;
+}
+
+.draft-btn:hover {
+    transform: scale(1.1) !important;
+    background: rgba(0,0,0,0.1) !important;
+}
+
+.dark-mode .draft-btn:hover {
+    background: rgba(255,255,255,0.1) !important;
+}
+
+.draft-date {
+    font-size: 12px !important;
+    color: #666 !important;
+    margin-top: 5px !important;
+    width: 100% !important;
+    text-align: right !important;
+}
+
+.dark-mode .draft-date {
+    color: #999 !important;
+}
+
+/* Tombol show drafts di toggle view */
+#show-drafts {
+    background: #f5f5f5 !important;
+    color: #128C7E !important;
+    border: 1px solid #128C7E !important;
+}
+
+.dark-mode #show-drafts {
+    background: #1e1e1e !important;
+    color: #25D366 !important;
+    border-color: #25D366 !important;
+}
+
+#show-drafts.active {
+    background: #128C7E !important;
+    color: white !important;
+}
+
+.dark-mode #show-drafts.active {
+    background: #25D366 !important;
+}
+
+#show-drafts:hover {
+    background: rgba(18, 140, 126, 0.1) !important;
+}
+
+.dark-mode #show-drafts:hover {
+    background: rgba(37, 211, 102, 0.1) !important;
+}
+/* ================== END STYLE DRAF ================== */
+
+
+        /* Style untuk modal input nama draf */
+#draft-name-input {
+    width: 100%;
+    padding: 10px;
+    margin: 15px 0;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 16px;
+}
+
+.dark-mode #draft-name-input {
+    background-color: #333;
+    color: #e0e0e0;
+    border-color: #444;
+}
+        
+/* ================== STYLE DRAF ================== */
+.draft-btn {
+    background: none;
+    border: none;
+    color: #128C7E;
+    font-size: 18px;
+    cursor: pointer;
+    margin: 0 5px;
+    transition: all 0.3s;
+}
+
+.dark-mode .draft-btn {
+    color: #25D366;
+}
+
+.draft-btn:hover {
+    transform: scale(1.1);
+}
+
+.draft-date {
+    font-size: 12px;
+    color: #666;
+    margin-top: 5px;
+    width: 100%;
+    text-align: right;
+}
+
+.dark-mode .draft-date {
+    color: #999;
+}
+/* ================== END STYLE DRAF ================== */
         /* Style untuk satuan kustom */
 .unit-selector {
     margin-left: 5px;
@@ -265,6 +381,11 @@
                 height: 36px;
                 font-size: 15px;
             }
+            /* Gaya khusus untuk modal input nama draf */
+#draftNameModal .modal-content {
+    top: -120px; /* Atur nilai negatif untuk menggeser lebih ke atas */
+    margin-top: 0; /* Pastikan margin-top 0 */
+}
             
             .dark-mode-overlay {
                 clip-path: circle(0% at 35px 35px);
@@ -1039,7 +1160,8 @@
         <div class="toggle-view">
             <button class="toggle-btn active" id="show-products"><i class="fas fa-box-open"></i> Produk</button>
             <button class="toggle-btn" id="show-orders"><i class="fas fa-shopping-cart"></i> daftar barang (<span id="item-count">0</span>)</button>
-            <button class="toggle-btn" id="show-favorites"><i class="fas fa-bookmark"></i></button>
+            <!-- <button class="toggle-btn" id="show-favorites"><i class="fas fa-bookmark"></i></button> -->
+            <button class="toggle-btn" id="show-drafts"><i class="fas fa-file-alt"></i></button>
         </div>
     </div> 
     
@@ -1050,6 +1172,9 @@
             </div>
             <button class="copy-order-btn" id="copy-order-btn" title="Salin list pesanan">
                 <i class="far fa-copy"></i>
+            </button>
+            <button class="copy-order-btn" id="save-draft-btn" title="Simpan sebagai draf">
+                <i class="fas fa-save"></i>
             </button>
         </div>
         
@@ -1079,10 +1204,22 @@
         </div>
         
         <div class="no-results" id="no-results">
-            <p>Produk ne bli/mbok alih konden ada</p>
-            <p></p>
+            <p>Produk ne bli/mbok alih ten wenten</p>
+            <p>antos malu  :) </p>
         </div>
     </div>
+
+    <!-- Modal Input Nama Draf -->
+<div class="modal" id="draftNameModal">
+    <div class="modal-content">
+        <div class="modal-title"><i class="fas fa-file-alt"></i> Nama Draf</div>
+        <input type="text" id="draft-name-input" placeholder="Masukkan nama draf" style="width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ddd; border-radius: 4px;">
+        <div class="modal-buttons">
+            <button class="modal-btn modal-btn-confirm" id="confirmDraftName"><i class="fas fa-check"></i> Simpan</button>
+            <button class="modal-btn modal-btn-cancel" id="cancelDraftName"><i class="fas fa-times"></i> Batal</button>
+        </div>
+    </div>
+</div>
     
     <!-- Modal Konfirmasi Reset -->
     <div class="modal" id="confirmModal">
@@ -1099,8 +1236,10 @@
     <div class="toast" id="toast">List mesalain!</div>
     <script>
     // Daftar produk
-        const products = [
-        { id: 1, name: "Sirine Mini /Mini Siren" },
+// Daftar produk
+// Daftar produk
+const products = [
+{ id: 1, name: "Sirine Mini /Mini Siren" },
     { id: 2, name: "Conector HDMI M-F 90" },
     { id: 3, name: "Conector HDMI M-F 180" },
     { id: 4, name: "Conector HDMI F-F Sambungan" },
@@ -4631,7 +4770,7 @@
     { id: 3434, name: "Kabel NYMHY 2x0.75 Rubytech" },
     { id: 3435, name: "Kabel NYMHY 2x0.75 Rubytech Hitam" },
     { id: 3436, name: "Kabel NYMHY Lotus 2x0.75" },
-    { id: 3437, name: "Imou Ranger A1 IPC-K2E1P 2K" },
+            { id: 3437, name: "Imou Ranger A1 IPC-K2E1P 2K" },
 { id: 3438, name: "Imou Bullet 2 IPC-F22FEP" },
 { id: 3439, name: "Imou Bullet 2C IPC-F22P" },
 { id: 3440, name: "Imou Bullet 2E IPC-F22FP" },
@@ -4662,20 +4801,38 @@
 { id: 3465, name: "Imou Turret POE IPC-T42EA 4MP" },
 { id: 3466, name: "Imou Cell Go IPC-B32P-V2" },
 { id: 3467, name: "Imou Cell Go IPC Solar Panel" },
-{ id: 3468, name: "Imou Smart Lock (ASL-K2C-H)" }
+{ id: 3468, name: "Imou Smart Lock (ASL-K2C-H)" },
+{ id: 3469, name: "Kabel UTP/LAN Cat 6 Hikvision DS-1LN6UU/CCA Grey" },
+{ id: 3470, name: "Kabel UTP/LAN Cat 6 Hikvision DS-1LN6U-W/CCA White" },
+{ id: 3471, name: "Loewix Camera Outdoor 5MP LX15F550 Cat Eyes" },
+{ id: 3472, name: "Loewix NVR 10CH LX1908" },
+{ id: 3473, name: "Loewix NVR 16CH LX1916" },
+{ id: 3474, name: "Loewix POE 4+2 10/100" },
+{ id: 3475, name: "Loewix POE 8+2 10/100" },
+{ id: 3476, name: "Loewix Camera 2MP LX-210S323D 3.6mm TKDN" },
+{ id: 3477, name: "Loewix DVR 4ch 2MP" },
+{ id: 3478, name: "Loewix DVR 8ch 2MP Audio" },
+{ id: 3479, name: "Loewix POE 16+2 LX-2116N" },
+{ id: 3480, name: "Loewix Camera 2MP LX-4F320 AHD Indoor" },
+{ id: 3481, name: "Loewix Camera 2MP LX-4F320-CE AHD Color Indoor" },
+{ id: 3482, name: "Loewix Camera Indoor 5MP LX4F550 AHD" },
+{ id: 3483, name: "Loewix Camera 2MP LX-50F320 AHD Outdoor" },
+{ id: 3484, name: "Loewix Camera 2MP LX-50F320-CE AHD Color Outdoor" },
+{ id: 3485, name: "Loewix DVR 4ch 5MP Audio" },
+{ id: 3486, name: "Loewix DVR 8ch 5MP Audio" },
+{ id: 3487, name: "Loewix DVR 16ch 5MP Audio" },
+{ id: 3488, name: "Loewix IP Camera Indoor 4MP Colorvu LX-IPF10CE30 POE Onvif" },
+{ id: 3489, name: "Loewix IP Camera Outdoor 4MP LX-IPF1830IP" }
+  
+];
 
-
-    
-
-    ];
-    
-   // Variabel untuk menyimpan pesanan dan preferensi
+// Variabel untuk menyimpan pesanan dan preferensi
 let orders = {};
 let totalItems = 0;
 let currentView = 'products'; // Menyimpan view saat ini
 let searchStates = { // Menyimpan state pencarian untuk setiap view
     products: { term: '', lastTerm: '' },
-    favorites: { term: '', lastTerm: '' }
+    drafts: { term: '', lastTerm: '' }
 };
 
 // Fungsi debounce untuk menunda eksekusi
@@ -4698,13 +4855,11 @@ function loadProducts() {
 
     container.innerHTML = '';
     
-    const favorites = JSON.parse(localStorage.getItem('favorites') || '{}');
     const units = JSON.parse(localStorage.getItem('productUnits') || '{}');
     
     products.forEach(product => {
         if (!product.id || !product.name) return;
         
-        const isFavorite = favorites[product.id] || false;
         const currentUnit = units[product.id] || 'pcs';
 
         const productCard = document.createElement('div');
@@ -4713,9 +4868,6 @@ function loadProducts() {
         productCard.dataset.name = product.name.toLowerCase();
         
         productCard.innerHTML = `
-            <button class="favorite-btn ${isFavorite ? 'active' : ''}" data-id="${product.id}">
-                <i class="fas ${isFavorite ? 'fas' : 'far'} fa-bookmark"></i>
-            </button>
             <div class="product-name">${product.name}</div>
             <div class="unit-control">
                 <button class="quantity-btn minus" data-id="${product.id}"><i class="fas fa-minus"></i></button>
@@ -4742,7 +4894,6 @@ function filterProducts() {
     const searchTerm = searchInput.value.toLowerCase();
     const productCards = document.querySelectorAll('.product-card');
     let visibleCount = 0;
-    const favorites = JSON.parse(localStorage.getItem('favorites') || '{}');
     
     // Update search state untuk view saat ini
     searchStates[currentView].term = searchTerm;
@@ -4755,18 +4906,12 @@ function filterProducts() {
     
     productCards.forEach(card => {
         const productName = card.dataset.name;
-        const productId = card.dataset.id;
         
         let shouldShow = true;
         
-        // Filter berdasarkan view
-        if (currentView === 'favorites') {
-            shouldShow = favorites[productId];
-        }
-        
         // Filter berdasarkan pencarian
         if (filterTerm !== '') {
-            shouldShow = shouldShow && productName.includes(filterTerm);
+            shouldShow = productName.includes(filterTerm);
         }
         
         if (shouldShow) {
@@ -4822,9 +4967,9 @@ function generateOrderText() {
         const quantity = orders[productId];
         if (quantity > 0) {
             const product = products.find(p => p.id == productId);
-            const unit = (units[productId] || 'pcs').toLowerCase();
+            const unit = units[productId] || 'pcs';
 
-            message += `${itemNumber}. ${product.name} = ${quantity} ${unit.charAt(0).toUpperCase() + unit.slice(1)}\n\n`;
+            message += `${itemNumber}. ${product.name} = ${quantity} ${unit}\n\n`;
             itemNumber++;
         }
     });
@@ -4930,12 +5075,13 @@ function sendOrderToWhatsApp() {
     }
     
     const message = generateOrderText();
-    const phoneNumber = '628175777488';
+    const phoneNumber = '6285955202282';
     const encodedMessage = encodeURIComponent(message);
     const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodedMessage}`;
     window.open(whatsappUrl, '_blank');
 }
 
+// Fungsi untuk menyalin pesanan ke clipboard
 function copyOrderToClipboard() {
     if (totalItems === 0) {
         showToast('List pesanan nu puyung');
@@ -4950,9 +5096,6 @@ function copyOrderToClipboard() {
         showToast('Gagal menyalin list pesanan');
     });
 }
-    
-
-
 
 // Fungsi untuk menampilkan toast notification
 function showToast(message) {
@@ -4983,11 +5126,222 @@ function performReset() {
     });
     updateOrderSummary();
     document.getElementById('confirmModal').style.display = 'none';
-    
-    // Jika di view favorites, refresh filter
-    if (currentView === 'favorites') {
-        filterProducts();
+}
+
+// Fungsi untuk menyimpan pesanan sebagai draf
+function saveAsDraft() {
+    if (totalItems === 0) {
+        showToast('List pesanan nu puyung');
+        return;
     }
+    
+    // Tampilkan modal input nama draf
+    document.getElementById('draftNameModal').style.display = 'flex';
+    document.getElementById('draft-name-input').focus();
+}
+
+// Fungsi untuk melakukan penyimpanan draf setelah nama dimasukkan
+function performSaveDraft() {
+    const draftNameInput = document.getElementById('draft-name-input');
+    let draftName = draftNameInput.value.trim();
+    
+    if (draftName === '') {
+        draftName = `Draf ${new Date().toLocaleString('id-ID', {
+            day: 'numeric',
+            month: 'short',
+            hour: '2-digit',
+            minute: '2-digit'
+        })}`;
+    }
+    
+    const timestamp = new Date().getTime();
+    const draft = {
+        id: timestamp,
+        name: draftName,
+        date: new Date().toLocaleString('id-ID', {
+            day: 'numeric',
+            month: 'short',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        }),
+        orders: {...orders},
+        units: JSON.parse(localStorage.getItem('productUnits') || '{}')
+    };
+    
+    // Ambil draf yang sudah ada dari localStorage
+    let existingDrafts = JSON.parse(localStorage.getItem('drafts') || '[]');
+    
+    // Pastikan existingDrafts adalah array
+    if (!Array.isArray(existingDrafts)) {
+        existingDrafts = [];
+    }
+    
+    // Tambahkan draf baru
+    existingDrafts.push(draft);
+    
+    // Simpan kembali ke localStorage
+    localStorage.setItem('drafts', JSON.stringify(existingDrafts));
+    
+    // Sembunyikan modal dan reset input
+    document.getElementById('draftNameModal').style.display = 'none';
+    draftNameInput.value = '';
+    
+    showToast('Draf berhasil disimpan!');
+    
+    // Jika sedang di view drafts, refresh tampilan
+    if (currentView === 'drafts') {
+        loadDrafts();
+    }
+}
+
+// Fungsi untuk memuat daftar draf
+function loadDrafts() {
+    const container = document.getElementById('products-container');
+    if (!container) return;
+    
+    container.innerHTML = '';
+    
+    let drafts = JSON.parse(localStorage.getItem('drafts') || '[]');
+    const noResults = document.getElementById('no-results');
+    
+    // Pastikan drafts adalah array
+    if (!Array.isArray(drafts)) {
+        drafts = [];
+        localStorage.setItem('drafts', JSON.stringify(drafts));
+    }
+    
+    if (drafts.length === 0) {
+        noResults.textContent = 'draf pesanan konden menjangin';
+        noResults.classList.add('show');
+        return;
+    }
+    
+    noResults.classList.remove('show');
+    
+    // Filter draf berdasarkan pencarian jika ada
+    const searchTerm = searchStates.drafts.term.toLowerCase();
+    const filteredDrafts = drafts.filter(draft => {
+        // Cari di nama draf atau nama produk yang ada di draf
+        const draftNameMatch = draft.name.toLowerCase().includes(searchTerm);
+        
+        const productNames = Object.keys(draft.orders).map(id => {
+            const product = products.find(p => p.id == id);
+            return product ? product.name.toLowerCase() : '';
+        });
+        
+        const productMatch = productNames.some(name => name.includes(searchTerm));
+        
+        return draftNameMatch || productMatch;
+    });
+    
+    if (filteredDrafts.length === 0) {
+        noResults.textContent = 'Draf ne onden mejangin';
+        noResults.classList.add('show');
+        return;
+    }
+    
+    // Tampilkan draf dari yang terbaru
+    filteredDrafts.reverse().forEach(draft => {
+        const draftCard = document.createElement('div');
+        draftCard.className = 'product-card';
+        draftCard.dataset.id = draft.id;
+        
+        draftCard.innerHTML = `
+            <div style="width: 100%;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div class="product-name">${draft.name}</div>
+                    <button class="draft-btn delete-draft" data-id="${draft.id}" title="Hapus draf">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+                <div class="draft-date">${draft.date}</div>
+                <div style="margin-top: 10px; display: flex; gap: 10px;">
+                    <button class="toggle-btn load-draft" data-id="${draft.id}" style="flex: 1;">
+                        <i class="fas fa-file-import"></i> Buka
+                    </button>
+                </div>
+            </div>
+        `;
+        
+        container.appendChild(draftCard);
+    });
+}
+
+// Event listener untuk modal nama draf
+document.getElementById('confirmDraftName').addEventListener('click', performSaveDraft);
+document.getElementById('cancelDraftName').addEventListener('click', function() {
+    document.getElementById('draftNameModal').style.display = 'none';
+    document.getElementById('draft-name-input').value = '';
+});
+
+// Tutup modal saat klik di luar
+document.addEventListener('click', (e) => {
+    const modal = document.getElementById('draftNameModal');
+    if (e.target === modal) {
+        modal.style.display = 'none';
+        document.getElementById('draft-name-input').value = '';
+    }
+});
+
+// Handle enter key pada input nama draf
+document.getElementById('draft-name-input').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        performSaveDraft();
+    }
+});
+
+// Fungsi untuk memuat draf ke dalam pesanan
+function loadDraft(draftId) {
+    let drafts = JSON.parse(localStorage.getItem('drafts') || '[]');
+    
+    // Pastikan drafts adalah array
+    if (!Array.isArray(drafts)) {
+        drafts = [];
+    }
+    
+    const draft = drafts.find(d => d.id == draftId);
+    
+    if (!draft) {
+        showToast('Draf tidak ditemukan');
+        return;
+    }
+    
+    // Set orders dari draf
+    orders = {...draft.orders};
+    
+    // Set units dari draf
+    localStorage.setItem('productUnits', JSON.stringify(draft.units));
+    
+    // Perbarui tampilan
+    updateProductInputs();
+    updateOrderSummary();
+    
+    // Kembali ke view orders
+    toggleView('orders');
+    
+    showToast('Draf berhasil dimuat!');
+}
+
+// Fungsi untuk menghapus draf
+function deleteDraft(draftId) {
+    let drafts = JSON.parse(localStorage.getItem('drafts') || '[]');
+    
+    // Pastikan drafts adalah array
+    if (!Array.isArray(drafts)) {
+        drafts = [];
+    }
+    
+    const updatedDrafts = drafts.filter(d => d.id != draftId);
+    
+    localStorage.setItem('drafts', JSON.stringify(updatedDrafts));
+    
+    // Jika sedang di view drafts, refresh tampilan
+    if (currentView === 'drafts') {
+        loadDrafts();
+    }
+    
+    showToast('Draf berhasil dihapus');
 }
 
 // Fungsi untuk toggle tampilan
@@ -4996,12 +5350,12 @@ function toggleView(view) {
     const orderSummary = document.getElementById('order-summary');
     const showProductsBtn = document.getElementById('show-products');
     const showOrdersBtn = document.getElementById('show-orders');
-    const showFavoritesBtn = document.getElementById('show-favorites');
+    const showDraftsBtn = document.getElementById('show-drafts');
     const searchInput = document.getElementById('search');
     
     showProductsBtn.classList.remove('active');
     showOrdersBtn.classList.remove('active');
-    showFavoritesBtn.classList.remove('active');
+    showDraftsBtn.classList.remove('active');
     
     // Simpan state pencarian sebelum berpindah view
     if (currentView !== view && view !== 'orders') {
@@ -5015,35 +5369,18 @@ function toggleView(view) {
         productsView.style.display = 'block';
         orderSummary.style.display = 'none';
         showProductsBtn.classList.add('active');
+        loadProducts();
         filterProducts();
     } else if (view === 'orders') {
         productsView.style.display = 'none';
         orderSummary.style.display = 'block';
         showOrdersBtn.classList.add('active');
         updateOrderSummary();
-    } else if (view === 'favorites') {
+    } else if (view === 'drafts') {
         productsView.style.display = 'block';
         orderSummary.style.display = 'none';
-        showFavoritesBtn.classList.add('active');
-        filterProducts();
-    }
-}
-
-// Fungsi untuk toggle favorit
-function toggleFavorite(productId) {
-    const favorites = JSON.parse(localStorage.getItem('favorites') || '{}');
-    favorites[productId] = !favorites[productId];
-    localStorage.setItem('favorites', JSON.stringify(favorites));
-    
-    const favoriteBtn = document.querySelector(`.favorite-btn[data-id="${productId}"]`);
-    if (favoriteBtn) {
-        favoriteBtn.classList.toggle('active', favorites[productId]);
-        favoriteBtn.querySelector('i').className = favorites[productId] ? 'fas fa-bookmark' : 'far fa-bookmark';
-    }
-    
-    // Jika di view favorites, refresh filter
-    if (currentView === 'favorites') {
-        filterProducts();
+        showDraftsBtn.classList.add('active');
+        loadDrafts();
     }
 }
 
@@ -5197,7 +5534,7 @@ function printOrderToPDF() {
     doc.setFontSize(18);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(30, 70, 120);
-    doc.text(' ORDER LIST', pageWidth / 2, 20, { align: 'center' });
+    doc.text('ORDER LIST', pageWidth / 2, 20, { align: 'center' });
 
     // Garis bawah judul
     doc.setDrawColor(50, 100, 150);
@@ -5300,8 +5637,13 @@ document.addEventListener('DOMContentLoaded', () => {
     // Pencarian produk
     const searchInput = document.getElementById('search');
     searchInput.addEventListener('input', debounce(function(e) {
-        filterProducts();
-        showSuggestions(e.target.value);
+        if (currentView === 'drafts') {
+            searchStates.drafts.term = e.target.value;
+            loadDrafts();
+        } else {
+            filterProducts();
+            showSuggestions(e.target.value);
+        }
     }, 500));
     
     searchInput.addEventListener('keydown', handleSearchKeyDown);
@@ -5317,20 +5659,19 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('clear-search').addEventListener('click', function() {
         searchInput.value = '';
         searchStates[currentView].term = '';
-        filterProducts();
+        
+        if (currentView === 'drafts') {
+            loadDrafts();
+        } else {
+            filterProducts();
+        }
+        
         hideSuggestions();
         searchInput.focus();
     });
     
     // Delegasi event untuk semua interaksi
     document.addEventListener('click', (e) => {
-        // Tombol favorit
-        if (e.target.closest('.favorite-btn')) {
-            const btn = e.target.closest('.favorite-btn');
-            toggleFavorite(btn.dataset.id);
-            return;
-        }
-        
         // Tombol plus/minus
         const plusBtn = e.target.closest('.plus');
         const minusBtn = e.target.closest('.minus');
@@ -5349,6 +5690,20 @@ document.addEventListener('DOMContentLoaded', () => {
             
             input.value = value;
             handleQuantityChange(productId, value);
+        }
+        
+        // Tombol load draft
+        if (e.target.closest('.load-draft')) {
+            const btn = e.target.closest('.load-draft');
+            loadDraft(btn.dataset.id);
+            return;
+        }
+        
+        // Tombol delete draft
+        if (e.target.closest('.delete-draft')) {
+            const btn = e.target.closest('.delete-draft');
+            deleteDraft(btn.dataset.id);
+            return;
         }
     });
     
@@ -5395,8 +5750,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // Toggle tampilan
     document.getElementById('show-products').addEventListener('click', () => toggleView('products'));
     document.getElementById('show-orders').addEventListener('click', () => toggleView('orders'));
-    document.getElementById('show-favorites').addEventListener('click', () => {
-        toggleView('favorites');
+    document.getElementById('show-drafts').addEventListener('click', () => {
+        toggleView('drafts');
     });
     
     // Dark mode toggle
@@ -5404,6 +5759,9 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Salin list pesanan
     document.getElementById('copy-order-btn').addEventListener('click', copyOrderToClipboard);
+    
+    // Simpan sebagai draf
+    document.getElementById('save-draft-btn').addEventListener('click', saveAsDraft);
     
     // Cetak PDF
     document.getElementById('print-order').addEventListener('click', printOrderToPDF);
