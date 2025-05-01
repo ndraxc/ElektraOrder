@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mesen Barang Electra Gn Agung</title>
+    <title>Mesen Barang Electra Kapal</title>
     <style>
         * {
             box-sizing: border-box;
@@ -1168,7 +1168,7 @@
     <div class="order-summary" id="order-summary">
         <div class="order-summary-header">
             <div class="order-summary-title">
-                <h3><i class="fas fa-list"></i> List Pesanan (<span id="order-item-count">0</span> item)</h3>
+                <h3><i class="fas fa-list"></i> Data Barang Habis (<span id="order-item-count">0</span> item)</h3>
             </div>
             <button class="copy-order-btn" id="copy-order-btn" title="Salin list pesanan">
                 <i class="far fa-copy"></i>
@@ -1204,8 +1204,8 @@
         </div>
         
         <div class="no-results" id="no-results">
-            <p>Produk ne bli/mbok alih ten wenten</p>
-            <p>antos malu  :) </p>
+            <p>Produk ne mbok alih onden medata</p>
+            <p>antos malu nah :) </p>
         </div>
     </div>
 
@@ -1224,7 +1224,7 @@
     <!-- Modal Konfirmasi Reset -->
     <div class="modal" id="confirmModal">
         <div class="modal-content">
-            <div class="modal-title"></i> Seken ngulang ngae bli/mbok?</div>
+            <div class="modal-title"></i> Seken ngulang ngae mbok?</div>
             <div class="modal-buttons">
                 <button class="modal-btn modal-btn-confirm" id="confirmReset"><i class="fas fa-check"></i> ae!</button>
                 <button class="modal-btn modal-btn-cancel" id="cancelReset"><i class="fas fa-times"></i> sing</button>
@@ -4832,8 +4832,10 @@ let totalItems = 0;
 let currentView = 'products'; // Menyimpan view saat ini
 let searchStates = { // Menyimpan state pencarian untuk setiap view
     products: { term: '', lastTerm: '' },
-    drafts: { term: '', lastTerm: '' }
+    drafts: { term: '', lastTerm: '' },
+    orders: { term: '', lastTerm: '' }
 };
+let currentDraftId = null; // Menyimpan ID draf yang sedang dibuka
 
 // Fungsi debounce untuk menunda eksekusi
 function debounce(func, delay) {
@@ -4929,6 +4931,65 @@ function filterProducts() {
     clearBtn.style.display = searchTerm.length > 0 ? 'block' : 'none';
 }
 
+// Fungsi untuk mencari di daftar pesanan
+function searchInOrderItems(searchTerm) {
+    const orderItems = document.querySelectorAll('.order-item');
+    let foundItems = 0;
+    
+    // Reset semua highlight terlebih dahulu
+    orderItems.forEach(item => {
+        const nameElement = item.querySelector('.product-name-wrapper');
+        nameElement.innerHTML = nameElement.textContent; // Hapus highlight sebelumnya
+        
+        // Reset background
+        item.style.backgroundColor = '';
+        item.style.transition = 'background-color 0.5s ease';
+    });
+    
+    if (searchTerm.trim() === '') {
+        return;
+    }
+    
+    orderItems.forEach(item => {
+        const nameElement = item.querySelector('.product-name-wrapper');
+        const productName = nameElement.textContent.toLowerCase();
+        
+        if (productName.includes(searchTerm.toLowerCase())) {
+            foundItems++;
+            
+            // Highlight teks yang cocok
+            const startIdx = productName.indexOf(searchTerm.toLowerCase());
+            if (startIdx >= 0) {
+                const endIdx = startIdx + searchTerm.length;
+                const before = nameElement.textContent.substring(0, startIdx);
+                const match = nameElement.textContent.substring(startIdx, endIdx);
+                const after = nameElement.textContent.substring(endIdx);
+                
+                nameElement.innerHTML = `${before}<span style="background-color: #ffeb3b; color: #000; padding: 2px 0; border-radius: 3px;">${match}</span>${after}`;
+            }
+            
+            // Beri warna background untuk item yang ditemukan
+            item.style.backgroundColor = 'rgba(18, 140, 126, 0.1)';
+            
+            // Scroll ke item yang ditemukan (hanya yang pertama)
+            if (foundItems === 1) {
+                setTimeout(() => {
+                    item.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }, 100);
+            }
+        }
+    });
+    
+    // Update search state
+    searchStates.orders.term = searchTerm;
+    if (searchTerm !== '') {
+        searchStates.orders.lastTerm = searchTerm;
+    }
+    
+    const clearBtn = document.getElementById('clear-search');
+    clearBtn.style.display = searchTerm.length > 0 ? 'block' : 'none';
+}
+
 // Fungsi untuk memperbarui input produk berdasarkan pesanan
 function updateProductInputs() {
     for (const productId in orders) {
@@ -4967,16 +5028,23 @@ function generateOrderText() {
         const quantity = orders[productId];
         if (quantity > 0) {
             const product = products.find(p => p.id == productId);
-            const unit = units[productId] || 'pcs';
+            const unit = (units[productId] || 'pcs').toLowerCase();
 
-            message += `${itemNumber}. ${product.name} = ${quantity} ${unit}\n\n`;
+            // Gunakan titik + zero-width space (\u200B) agar tidak diindent otomatis
+            const prefix = `${itemNumber}.\u200B`;
+
+            if (unit === 'pcs' || unit === 'roll') {
+                message += `${prefix}${product.name} ( ${quantity} ) =\n\n`;
+            } else {
+                message += `${prefix}${product.name} ( ${quantity} ${unit} ) =\n\n`;
+            }
+
             itemNumber++;
         }
     });
 
     return message;
 }
-
 
 // Fungsi untuk memperbarui ringkasan pesanan
 function updateOrderSummary() {
@@ -5045,6 +5113,11 @@ function updateOrderSummary() {
             
             updateProductInputs();
             updateOrderSummary();
+            
+            // Jika ada pencarian aktif, terapkan kembali highlight
+            if (searchStates.orders.term) {
+                searchInOrderItems(searchStates.orders.term);
+            }
         });
     });
 }
@@ -5065,6 +5138,11 @@ function handleQuantityChange(productId, newValue) {
     }
     
     updateOrderSummary();
+    
+    // Jika ada pencarian aktif, terapkan kembali highlight
+    if (currentView === 'orders' && searchStates.orders.term) {
+        searchInOrderItems(searchStates.orders.term);
+    }
 }
 
 // Fungsi untuk mengirim pesanan ke WhatsApp
@@ -5121,11 +5199,20 @@ function resetAllOrders() {
 // Fungsi untuk melakukan reset setelah dikonfirmasi
 function performReset() {
     orders = {};
+    currentDraftId = null;
     document.querySelectorAll('.quantity-input').forEach(input => {
         input.value = 0;
     });
     updateOrderSummary();
     document.getElementById('confirmModal').style.display = 'none';
+    
+    // Reset pencarian jika ada
+    if (searchStates.orders.term) {
+        searchStates.orders.term = '';
+        searchStates.orders.lastTerm = '';
+        document.getElementById('search').value = '';
+        document.getElementById('clear-search').style.display = 'none';
+    }
 }
 
 // Fungsi untuk menyimpan pesanan sebagai draf
@@ -5135,28 +5222,48 @@ function saveAsDraft() {
         return;
     }
     
-    // Tampilkan modal input nama draf
+    // Jika sedang mengedit draf yang ada, langsung simpan tanpa minta nama
+    if (currentDraftId) {
+        performSaveDraft(currentDraftId);
+        return;
+    }
+    
+    // Tampilkan modal input nama draf hanya untuk draf baru
     document.getElementById('draftNameModal').style.display = 'flex';
     document.getElementById('draft-name-input').focus();
 }
 
-// Fungsi untuk melakukan penyimpanan draf setelah nama dimasukkan
-function performSaveDraft() {
-    const draftNameInput = document.getElementById('draft-name-input');
-    let draftName = draftNameInput.value.trim();
+// Fungsi untuk melakukan penyimpanan draf
+function performSaveDraft(draftId = null) {
+    let drafts = JSON.parse(localStorage.getItem('drafts') || '[]');
+    let draftName = '';
     
-    if (draftName === '') {
-        draftName = `Draf ${new Date().toLocaleString('id-ID', {
-            day: 'numeric',
-            month: 'short',
-            hour: '2-digit',
-            minute: '2-digit'
-        })}`;
+    // Jika menyimpan draf yang sudah ada (edit)
+    if (draftId) {
+        const existingDraft = drafts.find(d => d.id == draftId);
+        if (existingDraft) {
+            draftName = existingDraft.name;
+        }
+    } 
+    // Jika membuat draf baru
+    else {
+        const draftNameInput = document.getElementById('draft-name-input');
+        draftName = draftNameInput.value.trim();
+        
+        if (draftName === '') {
+            draftName = `Draf ${new Date().toLocaleString('id-ID', {
+                day: 'numeric',
+                month: 'short',
+                hour: '2-digit',
+                minute: '2-digit'
+            })}`;
+        }
+        
+        draftId = new Date().getTime(); // ID baru untuk draf baru
     }
     
-    const timestamp = new Date().getTime();
     const draft = {
-        id: timestamp,
+        id: draftId,
         name: draftName,
         date: new Date().toLocaleString('id-ID', {
             day: 'numeric',
@@ -5169,27 +5276,32 @@ function performSaveDraft() {
         units: JSON.parse(localStorage.getItem('productUnits') || '{}')
     };
     
-    // Ambil draf yang sudah ada dari localStorage
-    let existingDrafts = JSON.parse(localStorage.getItem('drafts') || '[]');
+    // Cari index draf jika sudah ada
+    const existingIndex = drafts.findIndex(d => d.id == draftId);
     
-    // Pastikan existingDrafts adalah array
-    if (!Array.isArray(existingDrafts)) {
-        existingDrafts = [];
+    if (existingIndex >= 0) {
+        // Update draf yang sudah ada
+        drafts[existingIndex] = draft;
+    } else {
+        // Tambahkan draf baru
+        drafts.push(draft);
     }
     
-    // Tambahkan draf baru
-    existingDrafts.push(draft);
+    // Simpan ke localStorage
+    localStorage.setItem('drafts', JSON.stringify(drafts));
     
-    // Simpan kembali ke localStorage
-    localStorage.setItem('drafts', JSON.stringify(existingDrafts));
+    // Set currentDraftId jika belum ada
+    if (!currentDraftId) {
+        currentDraftId = draftId;
+    }
     
     // Sembunyikan modal dan reset input
     document.getElementById('draftNameModal').style.display = 'none';
-    draftNameInput.value = '';
+    document.getElementById('draft-name-input').value = '';
     
     showToast('Draf berhasil disimpan!');
     
-    // Jika sedang di view drafts, refresh tampilan
+    // Refresh tampilan drafts jika sedang di view tersebut
     if (currentView === 'drafts') {
         loadDrafts();
     }
@@ -5212,7 +5324,7 @@ function loadDrafts() {
     }
     
     if (drafts.length === 0) {
-        noResults.textContent = 'draf pesanan konden menjangin';
+        noResults.textContent = 'Sing misi draf pesanan';
         noResults.classList.add('show');
         return;
     }
@@ -5236,7 +5348,7 @@ function loadDrafts() {
     });
     
     if (filteredDrafts.length === 0) {
-        noResults.textContent = 'Draf ne onden mejangin';
+        noResults.textContent = 'Draf ne mbok alih onden medata';
         noResults.classList.add('show');
         return;
     }
@@ -5250,10 +5362,15 @@ function loadDrafts() {
         draftCard.innerHTML = `
             <div style="width: 100%;">
                 <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <div class="product-name">${draft.name}</div>
-                    <button class="draft-btn delete-draft" data-id="${draft.id}" title="Hapus draf">
-                        <i class="fas fa-trash"></i>
-                    </button>
+                    <div class="product-name" data-id="${draft.id}">${draft.name}</div>
+                    <div style="display: flex; gap: 5px;">
+                        <button class="draft-btn rename-draft" data-id="${draft.id}" title="Ganti nama draf">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="draft-btn delete-draft" data-id="${draft.id}" title="Hapus draf">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
                 </div>
                 <div class="draft-date">${draft.date}</div>
                 <div style="margin-top: 10px; display: flex; gap: 10px;">
@@ -5268,11 +5385,82 @@ function loadDrafts() {
     });
 }
 
-// Event listener untuk modal nama draf
-document.getElementById('confirmDraftName').addEventListener('click', performSaveDraft);
+// Fungsi untuk menampilkan modal ganti nama draf
+function showRenameDraftModal(draftId) {
+    let drafts = JSON.parse(localStorage.getItem('drafts') || '[]');
+    const draft = drafts.find(d => d.id == draftId);
+    
+    if (!draft) {
+        showToast('Draf tidak ditemukan');
+        return;
+    }
+    
+    const modal = document.getElementById('draftNameModal');
+    const input = document.getElementById('draft-name-input');
+    const confirmBtn = document.getElementById('confirmDraftName');
+    
+    input.value = draft.name;
+    confirmBtn.dataset.draftId = draftId;
+    
+    modal.style.display = 'flex';
+    input.focus();
+}
+
+// Fungsi untuk mengganti nama draf
+function renameDraft(draftId, newName) {
+    let drafts = JSON.parse(localStorage.getItem('drafts') || '[]');
+    const draftIndex = drafts.findIndex(d => d.id == draftId);
+    
+    if (draftIndex >= 0) {
+        drafts[draftIndex].name = newName.trim();
+        drafts[draftIndex].date = new Date().toLocaleString('id-ID', {
+            day: 'numeric',
+            month: 'short',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+        
+        localStorage.setItem('drafts', JSON.stringify(drafts));
+        showToast('Nama draf berhasil diubah');
+        
+        // Jika sedang di view drafts, refresh tampilan
+        if (currentView === 'drafts') {
+            loadDrafts();
+        }
+        
+        // Jika draf yang di-rename sedang dibuka, update currentDraftId
+        if (currentDraftId == draftId) {
+            currentDraftId = draftId;
+        }
+    } else {
+        showToast('Gagal mengubah nama draf');
+    }
+}
+
+// Event listener untuk modal input nama draf
+document.getElementById('confirmDraftName').addEventListener('click', function() {
+    const draftNameInput = document.getElementById('draft-name-input');
+    const draftName = draftNameInput.value.trim();
+    const draftId = this.dataset.draftId;
+    
+    if (draftId) {
+        // Ini adalah operasi rename
+        renameDraft(draftId, draftName);
+    } else {
+        // Ini adalah operasi simpan baru
+        performSaveDraft();
+    }
+    
+    document.getElementById('draftNameModal').style.display = 'none';
+    draftNameInput.value = '';
+    this.removeAttribute('data-draft-id');
+});
+
 document.getElementById('cancelDraftName').addEventListener('click', function() {
     document.getElementById('draftNameModal').style.display = 'none';
     document.getElementById('draft-name-input').value = '';
+    document.getElementById('confirmDraftName').removeAttribute('data-draft-id');
 });
 
 // Tutup modal saat klik di luar
@@ -5281,13 +5469,22 @@ document.addEventListener('click', (e) => {
     if (e.target === modal) {
         modal.style.display = 'none';
         document.getElementById('draft-name-input').value = '';
+        document.getElementById('confirmDraftName').removeAttribute('data-draft-id');
     }
 });
 
 // Handle enter key pada input nama draf
 document.getElementById('draft-name-input').addEventListener('keypress', function(e) {
     if (e.key === 'Enter') {
-        performSaveDraft();
+        const confirmBtn = document.getElementById('confirmDraftName');
+        if (confirmBtn.dataset.draftId) {
+            renameDraft(confirmBtn.dataset.draftId, this.value);
+        } else {
+            performSaveDraft();
+        }
+        document.getElementById('draftNameModal').style.display = 'none';
+        this.value = '';
+        confirmBtn.removeAttribute('data-draft-id');
     }
 });
 
@@ -5299,6 +5496,7 @@ function loadDraft(draftId) {
     if (!Array.isArray(drafts)) {
         drafts = [];
     }
+    currentDraftId = draftId;
     
     const draft = drafts.find(d => d.id == draftId);
     
@@ -5306,6 +5504,9 @@ function loadDraft(draftId) {
         showToast('Draf tidak ditemukan');
         return;
     }
+    
+    // Set current draft ID
+    currentDraftId = draftId;
     
     // Set orders dari draf
     orders = {...draft.orders};
@@ -5339,6 +5540,11 @@ function deleteDraft(draftId) {
     // Jika sedang di view drafts, refresh tampilan
     if (currentView === 'drafts') {
         loadDrafts();
+    }
+    
+    // Jika draf yang dihapus sedang dibuka, reset currentDraftId
+    if (currentDraftId == draftId) {
+        currentDraftId = null;
     }
     
     showToast('Draf berhasil dihapus');
@@ -5376,6 +5582,11 @@ function toggleView(view) {
         orderSummary.style.display = 'block';
         showOrdersBtn.classList.add('active');
         updateOrderSummary();
+        
+        // Jika ada pencarian aktif, terapkan kembali
+        if (searchStates.orders.term) {
+            searchInOrderItems(searchStates.orders.term);
+        }
     } else if (view === 'drafts') {
         productsView.style.display = 'block';
         orderSummary.style.display = 'none';
@@ -5534,7 +5745,7 @@ function printOrderToPDF() {
     doc.setFontSize(18);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(30, 70, 120);
-    doc.text('ORDER LIST', pageWidth / 2, 20, { align: 'center' });
+    doc.text('ELECTRA KAPAL ORDER LIST', pageWidth / 2, 20, { align: 'center' });
 
     // Garis bawah judul
     doc.setDrawColor(50, 100, 150);
@@ -5640,6 +5851,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (currentView === 'drafts') {
             searchStates.drafts.term = e.target.value;
             loadDrafts();
+        } else if (currentView === 'orders') {
+            searchInOrderItems(e.target.value);
         } else {
             filterProducts();
             showSuggestions(e.target.value);
@@ -5662,6 +5875,8 @@ document.addEventListener('DOMContentLoaded', () => {
         
         if (currentView === 'drafts') {
             loadDrafts();
+        } else if (currentView === 'orders') {
+            searchInOrderItems('');
         } else {
             filterProducts();
         }
@@ -5675,7 +5890,6 @@ document.addEventListener('DOMContentLoaded', () => {
         // Tombol plus/minus
         const plusBtn = e.target.closest('.plus');
         const minusBtn = e.target.closest('.minus');
-        
         if (plusBtn || minusBtn) {
             const button = plusBtn || minusBtn;
             const productId = button.dataset.id;
@@ -5703,6 +5917,13 @@ document.addEventListener('DOMContentLoaded', () => {
         if (e.target.closest('.delete-draft')) {
             const btn = e.target.closest('.delete-draft');
             deleteDraft(btn.dataset.id);
+            return;
+        }
+        
+        // Tombol rename draft
+        if (e.target.closest('.rename-draft')) {
+            const btn = e.target.closest('.rename-draft');
+            showRenameDraftModal(btn.dataset.id);
             return;
         }
     });
@@ -5791,6 +6012,8 @@ window.addEventListener('beforeunload', function (e) {
         e.returnValue = '';
     }
 });
+        
+        
   </script>
 </body>
 </html>
